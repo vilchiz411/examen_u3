@@ -30,56 +30,99 @@ export default function LoginExam() {
   async function procesarAcceso(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    // TODO: limpiar errores previos.
-    // TODO: validar campos vacíos.
-    // TODO: validar formato de correo.
-    // TODO: activar estado de carga.
-    // TODO: configurar persistencia según recordarme.
-    // TODO: autenticar usuario.
-    // TODO: guardar usuario autenticado en estado.
-    // TODO: limpiar estado de carga.
-    // TODO: manejar errores y mostrarlos en pantalla.
+    try {
+      setError("");
+
+      const correoLimpio = correo.trim();
+      const contrasenaLimpia = contrasena.trim();
+
+      if (!correoLimpio || !contrasenaLimpia) {
+        setError("Todos los campos son obligatorios");
+        return;
+      }
+
+      if (!esCorreoValido(correoLimpio)) {
+        setError("El correo no es válido");
+        return;
+      }
+
+      setCargando(true);
+
+      await configurarPersistencia(recordarme);
+
+      const userCredential = await autenticarUsuario(
+        correoLimpio,
+        contrasenaLimpia
+      );
+
+      setUsuario({ email: userCredential.user.email || "" });
+
+    } catch (error: unknown) {
+      setError("Correo o contraseña incorrectos");
+    } finally {
+      setCargando(false);
+    }
   }
 
   async function salir() {
-    // TODO: cerrar sesión en Firebase.
-    // TODO: limpiar el usuario en estado.
-    // TODO: limpiar formulario si se desea.
+    await cerrarSesionUsuario();
+    setUsuario(null);
+    setCorreo("");
+    setContrasena("");
+    setError("");
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
-      <section className="w-full max-w-md">
+    <main className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
+      <section className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
+        
+        {/* HEADER */}
         <div>
-          <h1>Acceso escolar</h1>
-          <p>Completa la funcionalidad de inicio de sesión.</p>
+          <h1 className="text-2xl font-bold mb-2 text-center">
+            Acceso escolar
+          </h1>
+          <p className="text-gray-500 text-center mb-4">
+            Completa la funcionalidad de inicio de sesión.
+          </p>
         </div>
 
         {!usuario ? (
           <form onSubmit={procesarAcceso}>
+            
+            {/* CORREO */}
             <div>
-              <label htmlFor="correo">Correo electrónico</label>
+              <label className="block text-sm font-medium">Correo electrónico</label>
               <input
                 id="correo"
                 type="email"
+                className="w-full border rounded px-3 py-2 mt-1 mb-3"
                 value={correo}
-                onChange={(event) => setCorreo(event.target.value)}
+                onChange={(event) => {
+                  setCorreo(event.target.value);
+                  setError("");
+                }}
                 placeholder="alumno@correo.com"
               />
             </div>
 
+            {/* CONTRASEÑA */}
             <div>
-              <label htmlFor="contrasena">Contraseña</label>
+              <label className="block text-sm font-medium">Contraseña</label>
               <input
                 id="contrasena"
                 type="password"
+                className="w-full border rounded px-3 py-2 mt-1 mb-3"
                 value={contrasena}
-                onChange={(event) => setContrasena(event.target.value)}
+                onChange={(event) => {
+                  setContrasena(event.target.value);
+                  setError("");
+                }}
                 placeholder="******"
               />
             </div>
 
-            <label>
+            {/* CHECKBOX */}
+            <label className="flex items-center gap-2 mb-3">
               <input
                 type="checkbox"
                 checked={recordarme}
@@ -88,20 +131,37 @@ export default function LoginExam() {
               Recordarme
             </label>
 
-            {error ? <div>{error}</div> : null}
+            {/* ERROR */}
+            {error && (
+              <div className="bg-red-100 text-red-700 p-2 rounded mb-3 text-sm">
+                {error}
+              </div>
+            )}
 
-            <button type="submit" disabled={cargando} className="text-white">
+            {/* BOTÓN */}
+            <button
+              type="submit"
+              disabled={cargando}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded disabled:opacity-50"
+            >
               {tituloBoton}
             </button>
           </form>
         ) : (
-          <div>
-            <div>
-              <p>Inicio de sesión correcto</p>
-              <h2>Bienvenido, {usuario.email}</h2>
-            </div>
+          <div className="text-center">
+            
+            {/* ÉXITO */}
+            <p className="text-green-600 font-semibold mb-2">
+              Inicio de sesión correcto
+            </p>
+            <h2 className="mb-4">Bienvenido, {usuario.email}</h2>
 
-            <button type="button" onClick={salir} className="">
+            {/* LOGOUT */}
+            <button
+              type="button"
+              onClick={salir}
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+            >
               Cerrar sesión
             </button>
           </div>
