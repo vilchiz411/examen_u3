@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   autenticarUsuario,
   cerrarSesionUsuario,
   configurarPersistencia,
 } from "@/firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/firebase/client";
 
 type AuthUser = {
   email: string;
@@ -22,6 +24,18 @@ export default function LoginExam() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [usuario, setUsuario] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUsuario({ email: user.email || "" });
+      } else {
+        setUsuario(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const tituloBoton = useMemo(() => {
     return cargando ? "Entrando..." : "Entrar";
